@@ -161,10 +161,18 @@
             height: var(--header-height); background: var(--kacm-red); color: white;
             display: flex; align-items: center; padding: 0 15px; font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
         }
-        .modal-content-scroll { flex-grow: 1; overflow-y: auto; padding: 15px; }
+        /* CORRECTION CLAVIER : Ajout d'un padding-bottom confortable et gestion du scroll */
+        .modal-content-scroll { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
+            padding-bottom: 180px; /* Espace pour éviter que le clavier ne masque le dernier champ */
+            -webkit-overflow-scrolling: touch;
+        }
         .modal-footer-fixed {
             min-height: 65px; background: white; border-top: 1px solid #ddd;
             padding: 12px 15px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
+            z-index: 10;
         }
 
         .cart-item {
@@ -256,16 +264,16 @@
         <div class="modal-header-fixed">
             <button class="btn text-white p-0 me-3" onclick="closeContactModal()"><i class="fas fa-arrow-left fa-lg"></i></button> Contact Administration
         </div>
-        <div class="modal-content-scroll">
+        <div class="modal-content-scroll" id="scrollContact">
             <form id="contactForm">
                 <div class="field-wrapper" id="wrap-contactName">
                     <label class="form-label">Votre Nom *</label>
-                    <input type="text" id="contactName" class="form-control" oninput="checkField('contactName')">
+                    <input type="text" id="contactName" class="form-control" oninput="checkField('contactName'); scrollToActive(this);">
                 </div>
                 
                 <div class="field-wrapper" id="wrap-contactPhone">
                     <label class="form-label">Votre Numéro de tél *</label>
-                    <input type="tel" id="contactPhone" class="form-control" oninput="checkField('contactPhone')">
+                    <input type="tel" id="contactPhone" class="form-control" oninput="checkField('contactPhone'); scrollToActive(this);">
                 </div>
                 
                 <div class="field-wrapper" id="wrap-contactSubject">
@@ -279,7 +287,7 @@
                 
                 <div class="field-wrapper" id="wrap-contactMessage">
                     <label class="form-label">Message *</label>
-                    <textarea id="contactMessage" class="form-control" rows="4" oninput="checkField('contactMessage')"></textarea>
+                    <textarea id="contactMessage" class="form-control" rows="4" oninput="checkField('contactMessage'); scrollToActive(this);"></textarea>
                 </div>
             </form>
         </div>
@@ -352,22 +360,22 @@
         <div class="modal-header-fixed">
             <button class="btn text-white p-0 me-3" onclick="closeCheckout()"><i class="fas fa-arrow-left fa-lg"></i></button> Infos Livraison
         </div>
-        <div class="modal-content-scroll">
+        <div class="modal-content-scroll" id="scrollCheckout">
             <form id="orderForm">
                 <div class="field-wrapper" id="wrap-custName">
                     <label class="form-label">Nom complet *</label>
-                    <input type="text" id="custName" class="form-control" oninput="checkField('custName')">
+                    <input type="text" id="custName" class="form-control" oninput="checkField('custName'); scrollToActive(this);">
                 </div>
                 <div class="field-wrapper" id="wrap-custPhone">
                     <label class="form-label">Téléphone *</label>
-                    <input type="tel" id="custPhone" class="form-control" oninput="checkField('custPhone')">
+                    <input type="tel" id="custPhone" class="form-control" oninput="checkField('custPhone'); scrollToActive(this);">
                 </div>
                 <div class="field-wrapper" id="wrap-custAddress">
                     <label class="form-label">Adresse *</label>
-                    <textarea id="custAddress" class="form-control" rows="2" oninput="checkField('custAddress')"></textarea>
+                    <textarea id="custAddress" class="form-control" rows="2" oninput="checkField('custAddress'); scrollToActive(this);"></textarea>
                 </div>
                 <label class="form-label">Commentaire</label>
-                <textarea id="custComment" class="form-control" rows="2"></textarea>
+                <textarea id="custComment" class="form-control" rows="2" oninput="scrollToActive(this);"></textarea>
             </form>
         </div>
         <div class="modal-footer-fixed">
@@ -402,6 +410,13 @@
         let selectedSize = null;
 
         document.addEventListener('DOMContentLoaded', fetchProducts);
+
+        // --- FONCTION AUTOMATIQUE DE SCROLL VERS LE CHAMP ACTIF ---
+        function scrollToActive(element) {
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
 
         function closeLandingPage() {
             const landing = document.getElementById('landingPage');
