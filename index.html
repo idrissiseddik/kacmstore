@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KACM Store - Cloud Edition</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --kacm-red: #D32F2F;
+            --kacm-white: #FFFFFF;
+            --header-height: 60px;
+            --footer-height: 78px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding-top: var(--header-height);
+            padding-bottom: var(--footer-height);
+            color: #333;
+        }
+
+        .swal2-container { z-index: 9999 !important; }
+
+        /* LANDING PAGE DE DÉMARRAGE AVEC ANIMATION */
+        #landingPage {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--kacm-red); color: var(--kacm-white);
+            z-index: 3000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 25px;
+            text-align: justify;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.6s ease, transform 0.6s ease, visibility 0.6s ease;
+        }
+        #landingPage.fade-out {
+            opacity: 0;
+            transform: scale(1.05);
+            visibility: hidden;
+        }
+        #landingPage h1 { font-weight: 800; font-size: 1.8rem; margin-bottom: 5px; text-align: center; }
+        #landingPage .store-subtitle { font-weight: 600; font-size: 0.85rem; margin-bottom: 20px; text-align: center; letter-spacing: 0.5px; opacity: 0.9; }
+        #landingPage .welcome-text { font-weight: 700; font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px; max-width: 600px; }
+        #landingPage .btn-enter {
+            background: var(--kacm-white); color: var(--kacm-red);
+            border: none; border-radius: 30px; padding: 12px 35px;
+            font-weight: 800; font-size: 1rem; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;
+        }
+        #landingPage .btn-enter:active { transform: scale(0.95); }
+
+        .fixed-header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--header-height);
+            background: var(--kacm-red);
+            color: var(--kacm-white);
+            z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-weight: 800; letter-spacing: 1px;
+        }
+
+        .fixed-footer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: var(--footer-height);
+            background: var(--kacm-white);
+            border-top: 2px solid var(--kacm-red);
+            z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .footer-btn {
+            background: none; border: none;
+            color: var(--kacm-red); font-size: 1.5rem;
+            position: relative; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .footer-btn:active { transform: scale(0.9); }
+
+        .footer-center-text {
+            font-size: 0.62rem; font-weight: 600; color: #555; text-align: center; line-height: 1.2;
+        }
+        .footer-center-text span { color: var(--kacm-red); font-weight: 700; }
+        
+        .btn-contact-link {
+            background: none; border: none; color: var(--kacm-red); font-weight: 800; padding: 0; text-decoration: underline; cursor: pointer; font-size: 0.62rem; display: inline;
+        }
+        .btn-contact-link:active { opacity: 0.7; }
+
+        .cart-badge {
+            position: absolute; top: -8px; right: -8px;
+            background: var(--kacm-red); color: white;
+            font-size: 0.7rem; width: 20px; height: 20px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; border: 2px solid white;
+        }
+
+        .product-card {
+            background: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            transition: transform 0.2s; margin-bottom: 15px;
+            display: flex; flex-direction: column; height: 100%; position: relative;
+        }
+
+        .out-of-stock-overlay {
+            position: absolute; top: 10px; left: 10px;
+            background: #dc3545; color: white; font-size: 0.65rem;
+            font-weight: 700; padding: 4px 8px; border-radius: 6px; z-index: 5;
+        }
+
+        .img-container {
+            width: 100%; padding-top: 100%; position: relative; overflow: hidden; background: #fff; cursor: pointer;
+        }
+        .img-container img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 15px;
+        }
+
+        .card-body { padding: 12px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 5px; line-height: 1.3; }
+        .card-price { color: var(--kacm-red); font-weight: 800; font-size: 1.1rem; margin-bottom: 10px; }
+        
+        .btn-kacm {
+            background: var(--kacm-red); color: white; border: none;
+            border-radius: 8px; padding: 10px; font-weight: 600; width: 100%; margin-top: auto;
+        }
+        .btn-kacm:active { opacity: 0.8; }
+
+        .fullscreen-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f8f9fa; z-index: 2000; display: none; flex-direction: column;
+        }
+
+        .modal-header-fixed {
+            height: var(--header-height); background: var(--kacm-red); color: white;
+            display: flex; align-items: center; padding: 0 15px; font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .modal-content-scroll { flex-grow: 1; overflow-y: auto; padding: 15px; }
+        .modal-footer-fixed {
+            min-height: 65px; background: white; border-top: 1px solid #ddd;
+            padding: 12px 15px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
+        }
+
+        .cart-item {
+            background: white; border-radius: 10px; padding: 12px; margin-bottom: 10px;
+            display: grid; grid-template-columns: 70px 1fr auto; grid-template-rows: auto auto; gap: 8px; align-items: center;
+        }
+        .cart-item-img { grid-row: 1 / span 2; width: 70px; height: 70px; object-fit: contain; }
+        .cart-item-info h6 { margin: 0; font-size: 0.85rem; font-weight: 700; }
+        .cart-item-price { grid-column: 2; font-weight: 800; color: var(--kacm-red); font-size: 0.95rem; }
+        .cart-actions { grid-column: 3; grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .qty-control { display: flex; align-items: center; gap: 8px; background: #f1f1f1; border-radius: 20px; padding: 2px 8px; }
+        .qty-btn { border: none; background: none; font-weight: bold; cursor: pointer; color: var(--kacm-red); }
+        .btn-trash { color: #dc3545; background: none; border: none; cursor: pointer; }
+
+        .size-selector { display: flex; gap: 8px; flex-wrap: wrap; margin: 15px 0; }
+        .size-btn { border: 2px solid #ddd; background: white; border-radius: 8px; padding: 8px 18px; font-weight: 600; cursor: pointer; }
+        .size-btn.active { border-color: var(--kacm-red); background: var(--kacm-red); color: white; }
+        .size-btn.disabled { opacity: 0.4; text-decoration: line-through; background: #eee; cursor: not-allowed; }
+
+        .admin-row { background: white; padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .form-control { border-radius: 10px; padding: 12px; border: 1px solid #ddd; margin-bottom: 12px; }
+        .btn-loading { pointer-events: none; opacity: 0.8; }
+
+        /* GESTION VISUELLE CHAMPS INVALIDES / VALIDES AVEC ANIMATION */
+        .field-wrapper { position: relative; margin-bottom: 12px; }
+        .field-wrapper .form-control { margin-bottom: 0; }
+        .field-wrapper.is-invalid-field .form-control {
+            border-color: #dc3545 !important;
+            background-color: #fff8f8;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+        }
+        .field-icon-ok {
+            position: absolute; right: 15px; top: 40px;
+            color: #28a745; font-size: 1.1rem;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            pointer-events: none;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LANDING PAGE D'ACCUEIL -->
+    <div id="landingPage">
+        <div>
+            <h1><i class="fas fa-futbol mb-2"></i><br>KACM STORE</h1>
+            <div class="store-subtitle">Store non officiel / متجر غير رسمي</div>
+            <div class="welcome-text" style="text-align: justify;">
+                <p dir="rtl" style="text-align: justify;">مرحباً بكم في المتجر غير الرسمي للكوكب المراكشي. نرحب بكل جماهيرنا الوفية، ونتمنى لكم تجربة تسوق ممتعة واكتشاف أحدث المنتجات الخاصة بنادينا العريق.</p>
+                <hr style="border-color: rgba(255,255,255,0.4); margin: 15px 0;">
+                <p style="text-align: justify;">Bienvenue sur la boutique non officielle du KAC Marrakech. Nous souhaitons la bienvenue à tous nos fidèles supporters et vous garantissons une excellente expérience pour découvrir et commander les articles de notre grand club.</p>
+            </div>
+            <div class="text-center">
+                <button class="btn-enter" onclick="closeLandingPage()">ENTRER / الدخول</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="fixed-header"><i class="fas fa-futbol me-2"></i> KACM STORE</header>
+
+    <main class="container py-3">
+        <div id="loadingIndicator" class="text-center py-5">
+            <i class="fas fa-spinner fa-spin fa-2x text-danger mb-2"></i>
+            <p class="text-muted small">Chargement depuis le Cloud...</p>
+        </div>
+        <div id="productsGrid" class="row g-3"></div>
+    </main>
+
+    <footer class="fixed-footer">
+        <button class="footer-btn" onclick="askAdminPassword()"><i class="fas fa-user-shield"></i></button>
+        <div class="footer-center-text">
+            Créé Par : <span>M. Seddik Elidrissi</span><br>
+            Pour toute question, suggestion ou réclamation, <button class="btn-contact-link" onclick="openContactModal()">contacter l'admin ICI</button>
+        </div>
+        <button class="footer-btn" onclick="openCart()">
+            <i class="fas fa-shopping-cart"></i>
+            <span id="cartBadge" class="cart-badge d-none">0</span>
+        </button>
+    </footer>
+
+    <!-- MODALE CONTACT ADMIN -->
+    <div id="contactModal" class="fullscreen-modal" style="z-index: 2200;">
+        <div class="modal-header-fixed">
+            <button class="btn text-white p-0 me-3" onclick="closeContactModal()"><i class="fas fa-arrow-left fa-lg"></i></button> Contact Administration
+        </div>
+        <div class="modal-content-scroll">
+            <form id="contactForm">
+                <div class="field-wrapper" id="wrap-contactName">
+                    <label class="form-label">Votre Nom *</label>
+                    <input type="text" id="contactName" class="form-control" oninput="checkField('contactName')">
+                </div>
+                
+                <div class="field-wrapper" id="wrap-contactPhone">
+                    <label class="form-label">Votre Numéro de tél *</label>
+                    <input type="tel" id="contactPhone" class="form-control" oninput="checkField('contactPhone')">
+                </div>
+                
+                <div class="field-wrapper" id="wrap-contactSubject">
+                    <label class="form-label">Objet *</label>
+                    <select id="contactSubject" class="form-control" onchange="checkField('contactSubject')">
+                        <option value="Question">Question</option>
+                        <option value="Suggestion">Suggestion</option>
+                        <option value="Réclamation">Réclamation</option>
+                    </select>
+                </div>
+                
+                <div class="field-wrapper" id="wrap-contactMessage">
+                    <label class="form-label">Message *</label>
+                    <textarea id="contactMessage" class="form-control" rows="4" oninput="checkField('contactMessage')"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer-fixed">
+            <button class="btn btn-kacm w-100" onclick="sendWhatsAppContact()"><i class="fab fa-whatsapp me-2"></i> Envoyer à l'admin</button>
+        </div>
+    </div>
+
+    <!-- PANIER -->
+    <div id="cartModal" class="fullscreen-modal">
+        <div class="modal-header-fixed">
+            <button class="btn text-white p-0 me-3" onclick="closeCart()"><i class="fas fa-arrow-left fa-lg"></i></button> Mon Panier
+        </div>
+        <div id="cartItemsContainer" class="modal-content-scroll"></div>
+        <div class="modal-footer-fixed" id="cartFooter" style="display:none;">
+            <div class="d-flex justify-content-between fw-bold fs-5 align-items-center">
+                <span>Total:</span> <span id="cartTotal" style="color:var(--kacm-red)">0 DH</span>
+            </div>
+            <button class="btn btn-kacm w-100" onclick="openCheckout()">Valider la commande <i class="fas fa-check ms-2"></i></button>
+        </div>
+    </div>
+
+    <!-- PANEL ADMIN -->
+    <div id="adminPanelModal" class="fullscreen-modal">
+        <div class="modal-header-fixed bg-dark">
+            <button class="btn text-white p-0 me-3" onclick="closeAdminPanel()"><i class="fas fa-arrow-left fa-lg"></i></button> 
+            <i class="fas fa-tools me-2"></i> Panneau d'Administration (Cloud)
+        </div>
+        <div class="modal-content-scroll">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0">Gestion Cloud</h5>
+                <button class="btn btn-success btn-sm fw-bold" onclick="openProductForm()"><i class="fas fa-plus me-1"></i> Nouvel Article</button>
+            </div>
+            <div id="adminProductsList"></div>
+        </div>
+    </div>
+
+    <!-- FORMULAIRE PRODUIT ADMIN -->
+    <div id="productFormModal" class="fullscreen-modal" style="z-index: 2500;">
+        <div class="modal-header-fixed bg-secondary">
+            <button class="btn text-white p-0 me-3" onclick="closeProductForm()"><i class="fas fa-arrow-left fa-lg"></i></button>
+            <span id="formModalTitle">Ajouter/Modifier un article</span>
+        </div>
+        <div class="modal-content-scroll">
+            <form id="adminProdForm">
+                <input type="hidden" id="adminProdId">
+                <label class="form-label">Nom de l'article *</label>
+                <input type="text" id="adminProdName" class="form-control" required>
+                <label class="form-label">Prix (en DH) *</label>
+                <input type="number" id="adminProdPrice" class="form-control" required>
+                <label class="form-label">Image (Lien URL ou Fichier Image)</label>
+                <input type="text" id="adminProdImg" class="form-control" placeholder="https://... ou uploadez ci-dessous">
+                <input type="file" id="adminProdFile" class="form-control" accept="image/*">
+
+                <div class="form-check form-switch my-3">
+                    <input class="form-check-input" type="checkbox" id="adminProdGlobalStock">
+                    <label class="form-check-label fw-bold" for="adminProdGlobalStock">Article en rupture totale</label>
+                </div>
+                <label class="form-label fw-bold">Rupture par tailles :</label>
+                <div class="d-flex gap-2 flex-wrap mb-3" id="adminSizesCheckboxes"></div>
+            </form>
+        </div>
+        <div class="modal-footer-fixed">
+            <button class="btn btn-kacm w-100" id="saveProdBtn" onclick="saveAdminProduct()">Enregistrer dans le Cloud</button>
+        </div>
+    </div>
+
+    <!-- CHECKOUT -->
+    <div id="checkoutModal" class="fullscreen-modal">
+        <div class="modal-header-fixed">
+            <button class="btn text-white p-0 me-3" onclick="closeCheckout()"><i class="fas fa-arrow-left fa-lg"></i></button> Infos Livraison
+        </div>
+        <div class="modal-content-scroll">
+            <form id="orderForm">
+                <div class="field-wrapper" id="wrap-custName">
+                    <label class="form-label">Nom complet *</label>
+                    <input type="text" id="custName" class="form-control" oninput="checkField('custName')">
+                </div>
+                <div class="field-wrapper" id="wrap-custPhone">
+                    <label class="form-label">Téléphone *</label>
+                    <input type="tel" id="custPhone" class="form-control" oninput="checkField('custPhone')">
+                </div>
+                <div class="field-wrapper" id="wrap-custAddress">
+                    <label class="form-label">Adresse *</label>
+                    <textarea id="custAddress" class="form-control" rows="2" oninput="checkField('custAddress')"></textarea>
+                </div>
+                <label class="form-label">Commentaire</label>
+                <textarea id="custComment" class="form-control" rows="2"></textarea>
+            </form>
+        </div>
+        <div class="modal-footer-fixed">
+            <button id="sendOrderBtn" class="btn btn-kacm w-100" onclick="sendWhatsAppOrder()"><i class="fab fa-whatsapp me-2"></i> Envoyer</button>
+        </div>
+    </div>
+
+    <!-- DETAILS PRODUIT -->
+    <div id="productDetailModal" class="fullscreen-modal">
+        <div class="modal-header-fixed">
+            <button class="btn text-white p-0 me-3" onclick="closeProductDetail()"><i class="fas fa-times fa-lg"></i></button> Détails
+        </div>
+        <div class="modal-content-scroll text-center">
+            <div class="img-container mb-3"><img id="detailImg" src="" alt=""></div>
+            <h4 id="detailTitle" class="fw-bold"></h4>
+            <h3 id="detailPrice" class="fw-bold mt-2" style="color:var(--kacm-red)"></h3>
+            <div id="sizeSelector" class="size-selector justify-content-center"></div>
+        </div>
+        <div class="modal-footer-fixed">
+            <button id="addToCartFromDetailBtn" class="btn btn-kacm w-100"><i class="fas fa-cart-plus me-2"></i> Ajouter au panier</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwPH8Y5VzTinDr2uuU_Gi3Vgqp9ZIlnxgRQaEbksa2IyWcou6isjoOofXD3vY_3nrK7/exec";
+
+        let products = [];
+        const defaultSizes = ["S", "M", "L", "XL", "XXL"];
+        let cart = [];
+        let currentDetailProduct = null;
+        let selectedSize = null;
+
+        document.addEventListener('DOMContentLoaded', fetchProducts);
+
+        function closeLandingPage() {
+            const landing = document.getElementById('landingPage');
+            landing.classList.add('fade-out');
+            setTimeout(() => {
+                landing.style.display = 'none';
+            }, 600);
+        }
+
+        // --- GESTION VALIDATION TEMPS RÉEL (ROUGE / ICÔNE OK) ---
+        function checkField(fieldId) {
+            const val = document.getElementById(fieldId).value.trim();
+            const wrap = document.getElementById('wrap-' + fieldId);
+            if (!wrap) return;
+
+            if (val !== "") {
+                wrap.classList.remove('is-invalid-field');
+                // Ajouter l'icône OK si elle n'existe pas déjà
+                if (!wrap.querySelector('.field-icon-ok')) {
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-check-circle field-icon-ok';
+                    wrap.appendChild(icon);
+                }
+            } else {
+                wrap.classList.add('is-invalid-field');
+                const existingIcon = wrap.querySelector('.field-icon-ok');
+                if (existingIcon) existingIcon.remove();
+            }
+        }
+
+        function validateFormFields(fieldIds) {
+            let isValid = true;
+            fieldIds.forEach(id => {
+                const val = document.getElementById(id).value.trim();
+                const wrap = document.getElementById('wrap-' + id);
+                if (val === "") {
+                    isValid = false;
+                    if (wrap) {
+                        wrap.classList.add('is-invalid-field');
+                        const existingIcon = wrap.querySelector('.field-icon-ok');
+                        if (existingIcon) existingIcon.remove();
+                    }
+                } else {
+                    checkField(id);
+                }
+            });
+            return isValid;
+        }
+
+        function resetFormValidation(fieldIds) {
+            fieldIds.forEach(id => {
+                const wrap = document.getElementById('wrap-' + id);
+                if (wrap) {
+                    wrap.classList.remove('is-invalid-field');
+                    const existingIcon = wrap.querySelector('.field-icon-ok');
+                    if (existingIcon) existingIcon.remove();
+                }
+            });
+        }
+
+        // --- CHARGEMENT DEPUIS LE CLOUD ---
+        function fetchProducts() {
+            if (API_URL.includes("VOTRE_URL")) {
+                products = [
+                    { id: 1, name: "Maillot Domicile KACM (Démo)", price: 250, img: "https://placehold.co/600x600/D32F2F/FFFFFF?text=KACM+Home", outOfStock: false, disabledSizes: [] }
+                ];
+                renderProducts();
+                document.getElementById('loadingIndicator').style.display = 'none';
+                return;
+            }
+
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(res => {
+                    if(res.status === "success") {
+                        products = res.data;
+                        renderProducts();
+                    }
+                })
+                .catch(() => Swal.fire({ icon: 'error', title: 'Erreur réseau', text: 'Impossible de charger les données du cloud.' }))
+                .finally(() => document.getElementById('loadingIndicator').style.display = 'none');
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = products.map(p => `
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="product-card">
+                        ${p.outOfStock ? '<div class="out-of-stock-overlay">Rupture</div>' : ''}
+                        <div class="img-container" onclick="openProductDetail(${p.id})">
+                            <img src="${p.img || 'https://placehold.co/600x600?text=No+Image'}" loading="lazy">
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title">${p.name}</div>
+                            <div class="card-price">${p.price} DH</div>
+                            <button class="btn btn-kacm btn-sm ${p.outOfStock ? 'disabled bg-secondary' : ''}" onclick="openProductDetail(${p.id})">
+                                ${p.outOfStock ? 'Indisponible' : '<i class="fas fa-plus"></i> Choisir'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- SYNCHRONISATION CLOUD (ADMIN) ---
+        function syncCloudData() {
+            if (API_URL.includes("VOTRE_URL")) return;
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "sync_products", products: products })
+            }).catch(err => console.log(err));
+        }
+
+        // --- SÉCURITÉ ADMIN ---
+        function askAdminPassword() {
+            Swal.fire({
+                title: 'Accès Admin', input: 'password', showCancelButton: true, confirmButtonColor: '#D32F2F'
+            }).then((res) => {
+                if (res.isConfirmed && res.value === 'Seddik') openAdminPanel();
+                else if (res.isConfirmed) Swal.fire({ icon: 'error', title: 'Mot de passe erroné' });
+            });
+        }
+
+        // --- GESTION CONTACT ADMIN ---
+        function openContactModal() {
+            document.getElementById('contactForm').reset();
+            resetFormValidation(['contactName', 'contactPhone', 'contactSubject', 'contactMessage']);
+            document.getElementById('contactModal').style.display = 'flex';
+        }
+        function closeContactModal() {
+            document.getElementById('contactModal').style.display = 'none';
+        }
+        function sendWhatsAppContact() {
+            const requiredFields = ['contactName', 'contactPhone', 'contactSubject', 'contactMessage'];
+            if (!validateFormFields(requiredFields)) {
+                return Swal.fire({ icon: 'error', text: 'Veuillez remplir tous les champs obligatoires mis en évidence en rouge.' });
+            }
+
+            const name = document.getElementById('contactName').value.trim();
+            const phone = document.getElementById('contactPhone').value.trim();
+            const subject = document.getElementById('contactSubject').value;
+            const message = document.getElementById('contactMessage').value.trim();
+
+            let msg = `💬 *MESSAGE KACM STORE*\n*Objet:* ${subject}\n*Nom:* ${name}\n*Téléphone:* ${phone}\n\n*Message:*\n${message}`;
+            window.open(`https://wa.me/212608975435?text=${encodeURIComponent(msg)}`, '_blank');
+            closeContactModal();
+
+            Swal.fire({
+                title: 'Merci pour votre ' + subject.toLowerCase() + ' !',
+                text: 'Votre ' + subject.toLowerCase() + ' a bien été transmise à notre administration via WhatsApp.',
+                icon: 'success',
+                confirmButtonColor: '#D32F2F',
+                confirmButtonText: 'OK'
+            });
+        }
+
+        // --- GESTION PANIER ---
+        function addToCart(productId, size) {
+            const product = products.find(p => p.id === productId);
+            if (product.outOfStock || product.disabledSizes.includes(size)) return;
+
+            const existingIndex = cart.findIndex(item => item.id === productId && item.size === size);
+
+            if (existingIndex > -1) {
+                Swal.fire({
+                    title: 'Article déjà dans le panier',
+                    text: 'Cet article avec cette taille est déjà dans votre panier. Voulez-vous augmenter sa quantité ?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#D32F2F',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Oui, ajouter +1',
+                    cancelButtonText: 'Non'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        cart[existingIndex].qty += 1;
+                        updateCartBadge();
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Quantité mise à jour !', showConfirmButton: false, timer: 1200, background: '#D32F2F', color: '#fff' });
+                    }
+                });
+            } else {
+                cart.push({ ...product, size, qty: 1 });
+                updateCartBadge();
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Ajouté !', showConfirmButton: false, timer: 1200, background: '#D32F2F', color: '#fff' });
+            }
+        }
+
+        function updateCartQty(idx, change) {
+            cart[idx].qty += change;
+            if (cart[idx].qty <= 0) {
+                removeCartItem(idx);
+                return;
+            }
+            renderCart();
+        }
+        
+        function removeCartItem(idx) {
+            const item = cart[idx];
+            Swal.fire({
+                title: 'Supprimer l\'article ?',
+                text: `Voulez-vous vraiment retirer "${item.name}" (${item.size}) de votre panier ?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#D32F2F',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, supprimer',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    cart.splice(idx, 1);
+                    renderCart();
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Article supprimé',
+                        showConfirmButton: false,
+                        timer: 1200,
+                        background: '#D32F2F',
+                        color: '#fff'
+                    });
+                } else {
+                    // Si l'utilisateur annule la suppression suite à la quantité abaissée à 0, on remet la quantité à 1
+                    if (cart[idx] && cart[idx].qty <= 0) {
+                        cart[idx].qty = 1;
+                    }
+                    renderCart();
+                }
+            });
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cartBadge');
+            const count = cart.reduce((sum, item) => sum + item.qty, 0);
+            badge.textContent = count;
+            badge.classList.toggle('d-none', count === 0);
+        }
+        
+        function renderCart() {
+            const container = document.getElementById('cartItemsContainer');
+            const footer = document.getElementById('cartFooter');
+            if (cart.length === 0) { container.innerHTML = '<p class="text-center mt-5">Panier vide</p>'; footer.style.display = 'none'; return; }
+            footer.style.display = 'flex';
+            let total = 0;
+            container.innerHTML = cart.map((item, idx) => {
+                total += item.price * item.qty;
+                return `<div class="cart-item">
+                    <img src="${item.img}" class="cart-item-img">
+                    <div><h6>${item.name}</h6><small>Taille: ${item.size}</small></div>
+                    <div class="cart-actions"><div class="qty-control"><button class="qty-btn" onclick="updateCartQty(${idx}, -1)">−</button>${item.qty}<button class="qty-btn" onclick="updateCartQty(${idx}, 1)">+</button></div><button class="btn-trash" onclick="removeCartItem(${idx})"><i class="fas fa-trash"></i></button></div>
+                    <div class="cart-item-price">${item.price * item.qty} DH</div></div>`;
+            }).join('');
+            document.getElementById('cartTotal').textContent = `${total} DH`;
+            updateCartBadge();
+        }
+
+        // --- NAVIGATION MODALES ---
+        function openCart() { renderCart(); document.getElementById('cartModal').style.display = 'flex'; }
+        function closeCart() { document.getElementById('cartModal').style.display = 'none'; }
+        function openCheckout() {
+            closeCart();
+            resetFormValidation(['custName', 'custPhone', 'custAddress']);
+            document.getElementById('checkoutModal').style.display = 'flex';
+        }
+        function closeCheckout() { document.getElementById('checkoutModal').style.display = 'none'; }
+        function openProductDetail(id) {
+            currentDetailProduct = products.find(p => p.id === id);
+            selectedSize = null;
+            document.getElementById('detailImg').src = currentDetailProduct.img;
+            document.getElementById('detailTitle').textContent = currentDetailProduct.name;
+            document.getElementById('detailPrice').textContent = `${currentDetailProduct.price} DH`;
+            document.getElementById('sizeSelector').innerHTML = defaultSizes.map(s => {
+                const dis = currentDetailProduct.disabledSizes.includes(s);
+                return `<button class="size-btn ${dis ? 'disabled' : ''}" onclick="${dis ? '' : `selectSize('${s}', this)`}">${s}</button>`;
+            }).join('');
+            document.getElementById('addToCartFromDetailBtn').onclick = () => {
+                if(!selectedSize) return Swal.fire({ icon: 'warning', text: 'Choisissez une taille' });
+                addToCart(currentDetailProduct.id, selectedSize);
+                closeProductDetail();
+            };
+            document.getElementById('productDetailModal').style.display = 'flex';
+        }
+        function selectSize(s, btn) { selectedSize = s; document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+        function closeProductDetail() { document.getElementById('productDetailModal').style.display = 'none'; }
+
+        // --- ADMIN CLOUD LOGIQUE ---
+        function openAdminPanel() { renderAdminProducts(); document.getElementById('adminPanelModal').style.display = 'flex'; }
+        function closeAdminPanel() { document.getElementById('adminPanelModal').style.display = 'none'; }
+        function renderAdminProducts() {
+            document.getElementById('adminProductsList').innerHTML = products.map(p => `
+                <div class="admin-row">
+                    <div class="d-flex align-items-center gap-2"><img src="${p.img}" style="width:40px; height:40px; object-fit:contain;"><div><strong>${p.name}</strong><br><small class="text-danger">${p.price} DH</small></div></div>
+                    <div><button class="btn btn-primary btn-sm" onclick="openProductForm(${p.id})"><i class="fas fa-edit"></i></button> <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})"><i class="fas fa-trash"></i></button></div>
+                </div>`).join('');
+        }
+        function openProductForm(id = null) {
+            document.getElementById('adminSizesCheckboxes').innerHTML = defaultSizes.map(s => `
+                <div class="form-check"><input class="form-check-input admin-size-chk" type="checkbox" value="${s}" id="chk_${s}"><label class="form-check-label small" for="chk_${s}">${s}</label></div>`).join('');
+            if(id) {
+                const p = products.find(x => x.id === id);
+                document.getElementById('adminProdId').value = p.id;
+                document.getElementById('adminProdName').value = p.name;
+                document.getElementById('adminProdPrice').value = p.price;
+                document.getElementById('adminProdImg').value = p.img;
+                document.getElementById('adminProdGlobalStock').checked = p.outOfStock;
+                p.disabledSizes.forEach(s => { if(document.getElementById(`chk_${s}`)) document.getElementById(`chk_${s}`).checked = true; });
+            } else {
+                document.getElementById('adminProdForm').reset();
+                document.getElementById('adminProdId').value = '';
+            }
+            document.getElementById('productFormModal').style.display = 'flex';
+        }
+        function closeProductForm() { document.getElementById('productFormModal').style.display = 'none'; }
+
+        async function saveAdminProduct() {
+            const id = document.getElementById('adminProdId').value;
+            const name = document.getElementById('adminProdName').value.trim();
+            const price = parseFloat(document.getElementById('adminProdPrice').value);
+            let img = document.getElementById('adminProdImg').value.trim();
+            const outOfStock = document.getElementById('adminProdGlobalStock').checked;
+            const fileInput = document.getElementById('adminProdFile');
+
+            const saveBtn = document.getElementById('saveProdBtn');
+            saveBtn.classList.add('btn-loading');
+            saveBtn.textContent = "Enregistrement...";
+
+            if(fileInput.files.length > 0 && !API_URL.includes("VOTRE_URL")) {
+                const file = fileInput.files[0];
+                const base64 = await toBase64(file);
+                try {
+                    const res = await fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ action: "upload_image", base64: base64.split(',')[1], mimeType: file.type, fileName: file.name })
+                    });
+                    const data = await res.json();
+                    if(data.status === "success") img = data.url;
+                } catch(e) { console.log(e); }
+            }
+
+            let disabledSizes = [];
+            defaultSizes.forEach(s => { if(document.getElementById(`chk_${s}`).checked) disabledSizes.push(s); });
+
+            if (id) {
+                const p = products.find(x => x.id == id);
+                p.name = name; p.price = price; p.img = img; p.outOfStock = outOfStock; p.disabledSizes = disabledSizes;
+            } else {
+                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                products.push({ id: newId, name, price, img, outOfStock, disabledSizes });
+            }
+
+            syncCloudData();
+            renderProducts();
+            renderAdminProducts();
+            closeProductForm();
+            saveBtn.classList.remove('btn-loading');
+            saveBtn.textContent = "Enregistrer dans le Cloud";
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Mis à jour!', showConfirmButton: false, timer: 1200, background: '#28a745', color: '#fff' });
+        }
+
+        function deleteProduct(id) {
+            products = products.filter(p => p.id !== id);
+            syncCloudData();
+            renderProducts();
+            renderAdminProducts();
+        }
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        function sendWhatsAppOrder() {
+            const requiredFields = ['custName', 'custPhone', 'custAddress'];
+            if (!validateFormFields(requiredFields)) {
+                return Swal.fire({ icon: 'error', text: 'Champs obligatoires manquants (voir en rouge)' });
+            }
+
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            
+            let msg = `🛒 *COMMANDE KACM STORE*\nClient: ${name}\nTél: ${phone}\nAdresse: ${address}\n\n`;
+            let total = 0;
+            cart.forEach(i => { msg += `- ${i.name} (${i.size}) x${i.qty} : ${i.price * i.qty} DH\n`; total += i.price * i.qty; });
+            msg += `\n*TOTAL: ${total} DH*`;
+            window.open(`https://wa.me/212608975435?text=${encodeURIComponent(msg)}`, '_blank');
+            closeCheckout();
+
+            Swal.fire({
+                title: 'Merci pour votre commande !',
+                text: 'Votre commande a bien été enregistrée et transmise via WhatsApp. Nous vous contacterons rapidement.',
+                icon: 'success',
+                confirmButtonColor: '#D32F2F',
+                confirmButtonText: 'OK'
+            });
+        }
+    </script>
+</body>
+</html>
